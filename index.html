@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome | Alex</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0b0f2e, #1a1f4b);
+      color: white;
+      min-height: 100vh;
+      /* overflow: hidden ONLY during welcome */
+    }
+
+    /* Welcome Screen */
+    #welcome-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(5, 10, 30, 0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      backdrop-filter: blur(5px);
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    #welcome-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .welcome-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.4rem;
+      margin-bottom: 30px;
+      color: #00F3FF;
+      text-align: center;
+    }
+
+    .math-question {
+      font-size: 2.2rem;
+      margin-bottom: 25px;
+      color: #a0f0ff;
+      font-weight: 600;
+    }
+
+    .answer-input {
+      padding: 12px 20px;
+      font-size: 1.2rem;
+      width: 120px;
+      text-align: center;
+      border: 2px solid #00F3FF;
+      border-radius: 10px;
+      background: rgba(10, 20, 40, 0.7);
+      color: white;
+      outline: none;
+      margin-bottom: 20px;
+    }
+
+    .answer-input:focus {
+      border-color: #87CEEB;
+      box-shadow: 0 0 10px rgba(0, 243, 255, 0.6);
+    }
+
+    .submit-btn {
+      background: linear-gradient(135deg, #00F3FF, #87CEEB);
+      color: #0b0f2e;
+      border: none;
+      padding: 12px 30px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.7);
+      transition: all 0.3s ease;
+    }
+
+    .submit-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(0, 243, 255, 1);
+    }
+
+    .error-msg {
+      color: #ff6666;
+      margin-top: 15px;
+      height: 22px;
+      font-size: 1rem;
+    }
+
+    .welcome-shape {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 243, 255, 0.2), transparent 70%);
+      box-shadow: 0 0 30px rgba(0, 243, 255, 0.5);
+      z-index: -1;
+    }
+    .welcome-shape:nth-child(1) { width: 100px; height: 100px; top: 15%; left: 10%; }
+    .welcome-shape:nth-child(2) { width: 70px; height: 70px; bottom: 20%; right: 15%; }
+    .welcome-shape:nth-child(3) { width: 150px; height: 150px; top: 50%; left: 5%; opacity: 0.2; }
+
+    /* MAIN CONTENT STYLES (now scrollable!) */
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .shape {
+      position: fixed;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 243, 255, 0.2), transparent 70%);
+      box-shadow: 0 0 40px rgba(0, 243, 255, 0.5);
+      z-index: -1;
+      animation: float 18s infinite ease-in-out;
+    }
+    .shape:nth-child(1) { width: 140px; height: 140px; top: 10%; left: 5%; animation-delay: 0s; }
+    .shape:nth-child(2) { width: 90px; height: 90px; bottom: 15%; right: 10%; animation-delay: -6s; }
+    .shape:nth-child(3) { width: 220px; height: 220px; top: 40%; left: 15%; animation-delay: -12s; opacity: 0.25; }
+    .shape:nth-child(4) { width: 70px; height: 70px; bottom: 30%; left: 20%; animation-delay: -3s; }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(25px, -35px) rotate(6deg); }
+      50% { transform: translate(-25px, 25px) rotate(-6deg); }
+      75% { transform: translate(15px, 35px) rotate(4deg); }
+    }
+
+    .profile-card {
+      background: rgba(10, 15, 40, 0.85);
+      border: 1px solid rgba(0, 243, 255, 0.4);
+      border-radius: 24px;
+      padding: 40px 30px;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6),
+                  inset 0 0 20px rgba(0, 243, 255, 0.25);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+      animation: fadeInUp 1s ease-out;
+      margin-bottom: 50px;
+    }
+
+    .profile-card::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #00F3FF, #87CEEB, #4FC3F7, #00E5FF);
+      z-index: -1;
+      border-radius: 26px;
+      animation: rotateBorder 10s linear infinite;
+    }
+
+    @keyframes rotateBorder {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .avatar {
+      width: 120px;
+      height: 120px;
+      background: linear-gradient(135deg, #00F3FF, #87CEEB);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 48px;
+      font-weight: 700;
+      color: #0b0f2e;
+      box-shadow: 0 0 30px rgba(0, 243, 255, 0.9);
+      animation: pulseGlow 2.5s infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 25px rgba(0, 243, 255, 0.7); }
+      100% { box-shadow: 0 0 45px rgba(0, 243, 255, 1), 0 0 70px rgba(135, 206, 235, 0.7); }
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.8rem;
+      background: linear-gradient(to right, #00F3FF, #FFFFFF);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .age {
+      font-size: 1.1rem;
+      color: #a0f0ff;
+      margin-bottom: 20px;
+    }
+
+    .intro {
+      font-size: 1.2rem;
+      line-height: 1.6;
+      margin: 25px 0;
+      color: #d0f8ff;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin: 25px 0;
+    }
+
+    .card {
+      background: rgba(15, 25, 60, 0.6);
+      border: 1px solid rgba(0, 243, 255, 0.3);
+      border-radius: 16px;
+      padding: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 6px 25px rgba(0, 243, 255, 0.6);
+      border-color: rgba(0, 243, 255, 0.8);
+    }
+
+    .label {
+      font-size: 0.85rem;
+      color: #70e0ff;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .value {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: white;
+    }
+
+    .future-plan {
+      background: rgba(5, 30, 60, 0.5);
+      border-radius: 16px;
+      padding: 20px;
+      margin-top: 20px;
+      border-left: 4px solid #00F3FF;
+      text-align: left;
+    }
+
+    .future-plan strong {
+      color: #70e0ff;
+    }
+
+    section {
+      background: rgba(10, 15, 40, 0.75);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 40px;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(0, 243, 255, 0.25);
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    section h2 {
+      font-family: 'Orbitron', sans-serif;
+      color: #00F3FF;
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+    }
+
+    ul {
+      padding-left: 20px;
+      margin: 15px 0;
+    }
+
+    li {
+      margin-bottom: 10px;
+      line-height: 1.5;
+      color: #d0f8ff;
+    }
+
+    footer {
+      text-align: center;
+      padding: 30px 0;
+      color: #70e0ff;
+      opacity: 0.9;
+      font-size: 0.95rem;
+    }
+
+    /* VIBECODING ENTRY STYLES */
+    .vibecoding-entry {
+      background: rgba(10, 15, 40, 0.75);
+      border-radius: 20px;
+      padding: 40px 30px;
+      margin-bottom: 40px;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(0, 243, 255, 0.25);
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+      text-align: center;
+    }
+
+    .project-btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #00F3FF, #87CEEB);
+      color: #0b0f2e;
+      text-decoration: none;
+      padding: 15px 40px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      border-radius: 50px;
+      box-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .project-btn:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 0 30px rgba(0, 243, 255, 1);
+      background: transparent;
+      color: #00F3FF;
+      border-color: #00F3FF;
+    }
+
+    /* MINI-GAME */
+    #minigame-section {
+      position: relative;
+      height: 400px;
+      background: rgba(5, 10, 30, 0.6);
+      border-radius: 20px;
+      border: 1px solid rgba(0, 243, 255, 0.3);
+      overflow: hidden;
+      margin-bottom: 50px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #game-title {
+      font-family: 'Orbitron', sans-serif;
+      color: #00F3FF;
+      margin-bottom: 12px;
+      font-size: 1.7rem;
+    }
+
+    #score-container {
+      margin-bottom: 15px;
+    }
+
+    #score-display, #high-score-display {
+      font-size: 1.3rem;
+      margin: 4px 0;
+    }
+
+    #score-display {
+      color: #a0f0ff;
+    }
+
+    #high-score-display {
+      color: #ffcc00;
+      font-weight: 600;
+    }
+
+    #powerup-display {
+      font-size: 1rem;
+      margin-bottom: 15px;
+      height: 24px;
+      color: #ff9966;
+      font-weight: bold;
+    }
+
+    #start-btn {
+      background: linear-gradient(135deg, #00F3FF, #87CEEB);
+      color: #0b0f2e;
+      border: none;
+      padding: 12px 35px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.15rem;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.7);
+      transition: all 0.3s ease;
+    }
+
+    #start-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(0, 243, 255, 1);
+    }
+
+    .spark {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 2000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      color: white;
+      text-shadow: 0 0 4px rgba(0,0,0,0.8);
+      user-select: none;
+    }
+
+    .spark.normal {
+      background: radial-gradient(circle, #ffffff, #00F3FF);
+      box-shadow: 0 0 10px #00F3FF, 0 0 20px rgba(0, 243, 255, 0.9);
+    }
+
+    .spark.power-plus {
+      background: radial-gradient(circle, #ffffff, #00ff88);
+      box-shadow: 0 0 12px #00ff88, 0 0 24px rgba(0, 255, 136, 0.9);
+    }
+
+    .spark.power-slow {
+      background: radial-gradient(circle, #ffffff, #d16bff);
+      box-shadow: 0 0 12px #d16bff, 0 0 24px rgba(209, 107, 255, 0.9);
+    }
+
+    /* Mouse Trail */
+    .particle {
+      position: fixed;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      background: radial-gradient(circle, #ffffff, #00F3FF);
+      box-shadow: 
+        0 0 12px #00F3FF,
+        0 0 24px rgba(0, 243, 255, 0.8),
+        0 0 36px rgba(135, 206, 235, 0.6);
+    }
+
+    @media (max-width: 600px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      h1 {
+        font-size: 2.2rem;
+      }
+      .avatar {
+        width: 100px;
+        height: 100px;
+        font-size: 40px;
+      }
+      #minigame-section {
+        height: 320px;
+      }
+      #game-title {
+        font-size: 1.4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Welcome Screen -->
+  <div id="welcome-screen">
+    <div class="welcome-shape"></div>
+    <div class="welcome-shape"></div>
+    <div class="welcome-shape"></div>
+
+    <div class="welcome-title">🔐 Access Required</div>
+    <div class="math-question" id="math-question">?</div>
+    <input type="number" id="answer-input" class="answer-input" placeholder="?" autocomplete="off" />
+    <button id="submit-btn" class="submit-btn">Enter</button>
+    <div class="error-msg" id="error-msg"></div>
+  </div>
+
+  <!-- Main Content (scrollable!) -->
+  <div class="shape"></div>
+  <div class="shape"></div>
+  <div class="shape"></div>
+  <div class="shape"></div>
+
+  <div class="container">
+    <div class="profile-card">
+      <div class="avatar">A</div>
+      <h1>Alex</h1>
+      <div class="age">Age: 12</div>
+      <p class="intro">"Hi! I am currently in school trying to learn."</p>
+
+      <div class="grid">
+        <div class="card">
+          <div class="label">Favorite Color</div>
+          <div class="value">Sky Blue</div>
+        </div>
+        <div class="card">
+          <div class="label">Favorite Food</div>
+          <div class="value">Fruits</div>
+        </div>
+        <div class="card">
+          <div class="label">Favorite Movie</div>
+          <div class="value">Mission Impossible</div>
+        </div>
+        <div class="card">
+          <div class="label">Future Plan</div>
+          <div class="value">Make Inventions</div>
+        </div>
+      </div>
+
+      <div class="future-plan">
+        <strong>🚀 My Mission:</strong><br>
+        Build amazing inventions that help people and explore the future of technology!
+      </div>
+    </div>
+
+    <section>
+      <h2>About Me</h2>
+      <p>
+        I love science, coding, and watching action movies like <em>Mission Impossible</em>. 
+        When I'm not in school, I'm usually sketching robot designs or reading about space.
+      </p>
+      <p>
+        My dream is to create something that makes life easier for everyone — maybe even a real-life jetpack!
+      </p>
+    </section>
+
+    <section>
+      <h2>My Invention Ideas 💡</h2>
+      <ul>
+        <li>A smart backpack that tells you what you forgot</li>
+        <li>Glasses that translate any language in real-time</li>
+        <li>A fruit-powered phone charger 🍎🔋</li>
+        <li>Robotic homework helper (just for checking!)</li>
+      </ul>
+    </section>
+
+    <!-- VIBECODING ENTRY MODULE -->
+    <section class="vibecoding-entry">
+      <h2>My VibeCoding Project</h2>
+      <p style="color: #d0f8ff; margin-bottom: 25px;">
+        Explore the games and tools I built during my coding course. 
+        Enter the digital playground below!
+      </p>
+      <a href="projects.html" class="project-btn">Enter Project Hub 🚀</a>
+    </section>
+    <!-- END VIBECODING ENTRY MODULE -->
+
+    <!-- MINI-GAME -->
+    <section id="minigame-section">
+      <div id="game-title">⚡ Catch the Invention Sparks!</div>
+      <div id="score-container">
+        <div id="score-display">Score: <span id="score">0</span></div>
+        <div id="high-score-display">High Score: <span id="high-score">0</span></div>
+      </div>
+      <div id="powerup-display"></div>
+      <button id="start-btn">Start Game</button>
+    </section>
+
+    <footer>
+      Made with curiosity • Scroll forever or until the next big idea! 🌌
+    </footer>
+  </div>
+
+  <script>
+    // === WELCOME SCREEN LOGIC ===
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const mathQuestionEl = document.getElementById('math-question');
+    const answerInput = document.getElementById('answer-input');
+    const submitBtn = document.getElementById('submit-btn');
+    const errorMsg = document.getElementById('error-msg');
+
+    let correctAnswer = 0;
+
+    function generateMathProblem() {
+      const num1 = Math.floor(Math.random() * 20) + 1;
+      const num2 = Math.floor(Math.random() * 20) + 1;
+      const operation = Math.random() > 0.5 ? '+' : '-';
+      
+      if (operation === '-' && num2 > num1) {
+        return generateMathProblem();
+      }
+
+      mathQuestionEl.textContent = `${num1} ${operation} ${num2} = ?`;
+      correctAnswer = operation === '+' ? num1 + num2 : num1 - num2;
+    }
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      setTimeout(() => errorMsg.textContent = '', 2000);
+    }
+
+    function checkAnswer() {
+      const userAnswer = parseInt(answerInput.value);
+      if (isNaN(userAnswer)) {
+        showError("Please enter a number.");
+        return;
+      }
+
+      if (userAnswer === correctAnswer) {
+        welcomeScreen.classList.add('hidden');
+        // Re-enable scrolling by removing overflow restriction
+        document.body.style.overflow = 'auto';
+      } else {
+        showError("Incorrect! Try again.");
+        answerInput.value = '';
+        answerInput.focus();
+      }
+    }
+
+    submitBtn.addEventListener('click', checkAnswer);
+    answerInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') checkAnswer();
+    });
+
+    generateMathProblem();
+
+    // === MOUSE TRAIL (works anywhere, including while scrolling) ===
+    const trailParticles = [];
+    const maxTrailParticles = 30;
+
+    function createTrailParticle(x, y) {
+      if (trailParticles.length >= maxTrailParticles) {
+        const old = trailParticles.shift();
+        if (old && old.parentNode) old.parentNode.removeChild(old);
+      }
+
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = `${x - 8}px`;
+      particle.style.top = `${y - 8}px`;
+      document.body.appendChild(particle);
+
+      let opacity = 1;
+      let size = 16;
+      let rotation = Math.random() * 360;
+
+      const animate = () => {
+        opacity -= 0.02;
+        size *= 0.96;
+        rotation += 2;
+        particle.style.opacity = opacity;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.transform = `rotate(${rotation}deg)`;
+        particle.style.left = `${parseFloat(particle.style.left) + (Math.random() - 0.5) * 2}px`;
+        particle.style.top = `${parseFloat(particle.style.top) + (Math.random() - 0.5) * 2}px`;
+
+        if (opacity > 0) {
+          requestAnimationFrame(animate);
+        } else {
+          particle.remove();
+          const index = trailParticles.indexOf(particle);
+          if (index > -1) trailParticles.splice(index, 1);
+        }
+      };
+
+      trailParticles.push(particle);
+      animate();
+    }
+
+    document.addEventListener('mousemove', (e) => createTrailParticle(e.clientX, e.clientY));
+    document.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      if (touch) createTrailParticle(touch.clientX, touch.clientY);
+    }, { passive: false });
+
+    // === MINI-GAME ===
+    const gameSection = document.getElementById('minigame-section');
+    const scoreDisplay = document.getElementById('score');
+    const highScoreDisplay = document.getElementById('high-score');
+    const powerupDisplay = document.getElementById('powerup-display');
+    const startBtn = document.getElementById('start-btn');
+    
+    let highScore = localStorage.getItem('alexMinigameHighScore') || 0;
+    highScoreDisplay.textContent = highScore;
+
+    let score = 0;
+    let gameActive = false;
+    let spawnInterval;
+    let slowMoActive = false;
+    let sparks = new Set();
+
+    startBtn.addEventListener('click', () => {
+      if (gameActive) return;
+      resetGame();
+      gameActive = true;
+      startBtn.disabled = true;
+      startBtn.textContent = 'Playing...';
+      spawnInterval = setInterval(spawnSpark, 900);
+      setTimeout(endGame, 30000);
+    });
+
+    function resetGame() {
+      score = 0;
+      scoreDisplay.textContent = score;
+      powerupDisplay.textContent = '';
+      slowMoActive = false;
+      sparks.clear();
+      document.querySelectorAll('.spark').forEach(el => el.remove());
+    }
+
+    function showPowerupMessage(msg) {
+      powerupDisplay.textContent = msg;
+      setTimeout(() => {
+        if (powerupDisplay.textContent === msg) {
+          powerupDisplay.textContent = '';
+        }
+      }, 3000);
+    }
+
+    function spawnSpark() {
+      if (!gameActive) return;
+
+      const type = Math.random();
+      let sparkType, points, symbol;
+      if (type < 0.12) {
+        sparkType = 'power-plus';
+        points = 3;
+        symbol = '+3';
+      } else if (type < 0.20) {
+        sparkType = 'power-slow';
+        points = 0;
+        symbol = '⏱️';
+      } else {
+        sparkType = 'normal';
+        points = 1;
+        symbol = '';
+      }
+
+      const spark = document.createElement('div');
+      spark.className = `spark ${sparkType}`;
+      spark.dataset.points = points;
+      spark.dataset.type = sparkType;
+
+      const x = Math.random() * (gameSection.offsetWidth - 40);
+      const y = gameSection.offsetHeight + 20;
+      spark.style.left = `${x}px`;
+      spark.style.top = `${y}px`;
+      spark.style.opacity = '0';
+      if (symbol) spark.textContent = symbol;
+
+      gameSection.appendChild(spark);
+      sparks.add(spark);
+
+      setTimeout(() => {
+        if (spark.parentNode) {
+          spark.style.transition = 'opacity 0.3s';
+          spark.style.opacity = '1';
+        }
+      }, 100);
+
+      let pos = y;
+      const speed = slowMoActive ? 0.6 : 1.2;
+
+      const move = () => {
+        if (!gameActive || !spark.parentNode) return;
+        pos -= speed;
+        spark.style.top = `${pos}px`;
+        spark.style.left = `${parseFloat(spark.style.left) + (Math.random() - 0.5) * 1}px`;
+
+        if (pos > -40) {
+          requestAnimationFrame(move);
+        } else {
+          spark.remove();
+          sparks.delete(spark);
+        }
+      };
+      move();
+
+      setTimeout(() => {
+        if (spark.parentNode) {
+          spark.remove();
+          sparks.delete(spark);
+        }
+      }, 5000);
+
+      spark.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!gameActive || !spark.parentNode) return;
+
+        const pts = parseInt(spark.dataset.points);
+        const type = spark.dataset.type;
+
+        if (pts > 0) {
+          score += pts;
+          scoreDisplay.textContent = score;
+        }
+
+        if (type === 'power-slow' && !slowMoActive) {
+          slowMoActive = true;
+          showPowerupMessage('⚡ Slow Motion Activated!');
+          setTimeout(() => {
+            slowMoActive = false;
+            showPowerupMessage('');
+          }, 5000);
+        }
+
+        spark.style.transform = 'scale(2)';
+        spark.style.opacity = '0';
+        spark.style.transition = 'all 0.3s';
+        setTimeout(() => {
+          if (spark.parentNode) {
+            spark.remove();
+            sparks.delete(spark);
+          }
+        }, 300);
+      });
+    }
+
+    function endGame() {
+      gameActive = false;
+      clearInterval(spawnInterval);
+      startBtn.disabled = false;
+      startBtn.textContent = 'Play Again';
+
+      document.querySelectorAll('.spark').forEach(el => el.remove());
+      sparks.clear();
+
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('alexMinigameHighScore', highScore);
+        highScoreDisplay.textContent = highScore;
+        alert(`🎉 NEW HIGH SCORE!\nFinal Score: ${score}\nYou're a legendary inventor!`);
+      } else {
+        alert(`🎉 Time's up! Final Score: ${score}\nHigh Score: ${highScore}\nKeep inventing!`);
+      }
+    }
+  </script>
+
+</body>
+</html>

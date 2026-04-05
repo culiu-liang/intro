@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horror Maze Escape</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+        
+        body {
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            border: 3px solid #333;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+            overflow: hidden;
+        }
+        
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        #startScreen h1 {
+            font-size: 48px;
+            color: #ff3333;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
+            letter-spacing: 3px;
+        }
+        
+        #startScreen p {
+            font-size: 18px;
+            margin: 10px 0;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+        
+        #startButton {
+            margin-top: 30px;
+            padding: 12px 30px;
+            font-size: 20px;
+            background: #ff3333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        #startButton:hover {
+            background: #ff0000;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+        }
+        
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #111;
+            cursor: none;
+        }
+        
+        #uiOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 5;
+        }
+        
+        .stats {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #555;
+        }
+        
+        #healthBar {
+            width: 200px;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        #healthFill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(to right, #ff3333, #ff9933);
+            transition: width 0.3s;
+        }
+        
+        #ammoDisplay {
+            font-size: 18px;
+            margin-top: 5px;
+        }
+        
+        #monsterHealthBar {
+            width: 200px;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        #monsterHealthFill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(to right, #33ff33, #99ff33);
+            transition: width 0.3s;
+        }
+        
+        #endScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        #endScreen h2 {
+            font-size: 60px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+        }
+        
+        #winText {
+            color: #33ff33;
+            text-shadow: 0 0 15px rgba(51, 255, 51, 0.7);
+        }
+        
+        #loseText {
+            color: #ff3333;
+        }
+        
+        #restartButton {
+            margin-top: 30px;
+            padding: 12px 30px;
+            font-size: 20px;
+            background: #555;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        #restartButton:hover {
+            background: #777;
+            transform: scale(1.05);
+        }
+        
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 30px;
+            height: 30px;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+            pointer-events: none;
+        }
+        
+        #crosshair::before, #crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        
+        #crosshair::before {
+            width: 30px;
+            height: 2px;
+            top: 14px;
+            left: 0;
+        }
+        
+        #crosshair::after {
+            width: 2px;
+            height: 30px;
+            top: 0;
+            left: 14px;
+        }
+        
+        .bloodSplatter {
+            position: absolute;
+            pointer-events: none;
+            opacity: 0.7;
+            z-index: 4;
+        }
+        
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            color: #aaa;
+            z-index: 5;
+        }
+        
+        #pointerLockTip {
+            position: absolute;
+            bottom: 45px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: #ff5555;
+            z-index: 6;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        #sprintIndicator {
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 5;
+        }
+        
+        #jumpscare {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            flex-direction: column;
+        }
+        
+        #jumpscare img {
+            max-width: 80%;
+            max-height: 80%;
+            filter: hue-rotate(0deg) saturate(1.5);
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        #jumpscareText {
+            color: #ff0000;
+            font-size: 36px;
+            margin-top: 20px;
+            text-shadow: 0 0 10px #ff0000;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="startScreen">
+            <h1>HORROR MAZE</h1>
+            <p>You're trapped in a dark maze with a terrifying monster chasing you.</p>
+            <p>Find the glowing weapons to fight back!</p>
+            <p>Survive as long as you can... but remember, there's no escape.</p>
+            <button id="startButton">ENTER THE MAZE</button>
+        </div>
+        
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="uiOverlay">
+            <div class="stats">
+                <div>PLAYER HEALTH</div>
+                <div id="healthBar"><div id="healthFill"></div></div>
+                <div id="ammoDisplay">AMMO: 0</div>
+            </div>
+            <div class="stats">
+                <div>MONSTER HEALTH</div>
+                <div id="monsterHealthBar"><div id="monsterHealthFill"></div></div>
+            </div>
+        </div>
+        
+        <div id="crosshair"></div>
+        <div id="sprintIndicator">SPRINTING</div>
+        
+        <div id="jumpscare">
+            <img id="jumpscareImage" src="image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHBhdGggZD0iTTUwIDQ1YzUgMCA5LTMgOS03cy00LTctOS03LTktMy05IDdjMCA0IDQgNyA5IDd6IiBmaWxsPSIjZmYwMDAwIi8+PHBhdGggZD0iTTMwIDY1YzAgNSA0IDkgOSA5czkgLTQgOSAtOWMtNSAwIC05IDQgLTkgOXoiIGZpbGw9IiNmZjAwMDAiLz48cGF0aCBkPSJNNzAgNjVjMCA1IDQgOSA5IDlzOSAtNCA5IC05Yy01IDAgLTkgNCAtOSA5eiIgZmlsbD0iI2ZmMDAwMCIvPjxwYXRoIGQ9Ik0yMCA0MGgyMHYyMEgyMFoiIGZpbGw9IiNmZjAwMDAiLz48cGF0aCBkPSJNNjAgNDBoMjB2MjBINGBaIiBmaWxsPSIjZmYwMDAwIi8+PC9zdmc+" alt="Monster Face">
+            <div id="jumpscareText">AAAAAHHHHH!</div>
+        </div>
+        
+        <div id="endScreen">
+            <h2 id="endMessage"></h2>
+            <p id="finalStats"></p>
+            <button id="restartButton">PLAY AGAIN</button>
+        </div>
+        
+        <div id="instructions">
+            WASD to move | SHIFT to sprint | Mouse to look (including up/down) | Left Click to shoot
+        </div>
+        <div id="pointerLockTip">Click anywhere to lock mouse and start looking around!</div>
+    </div>
+
+    <script>
+        // Game variables
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startScreen = document.getElementById('startScreen');
+        const endScreen = document.getElementById('endScreen');
+        const endMessage = document.getElementById('endMessage');
+        const finalStats = document.getElementById('finalStats');
+        const healthFill = document.getElementById('healthFill');
+        const monsterHealthFill = document.getElementById('monsterHealthFill');
+        const ammoDisplay = document.getElementById('ammoDisplay');
+        const startButton = document.getElementById('startButton');
+        const restartButton = document.getElementById('restartButton');
+        const pointerLockTip = document.getElementById('pointerLockTip');
+        const sprintIndicator = document.getElementById('sprintIndicator');
+        const jumpscare = document.getElementById('jumpscare');
+        
+        // Set canvas size
+        canvas.width = 800;
+        canvas.height = 600;
+        
+        // Game state
+        let gameState = 'start'; // 'start', 'playing', 'ended'
+        let player = {
+            x: 50,
+            y: 50,
+            angle: 0,
+            pitch: 0, // Vertical look angle
+            health: 100,
+            ammo: 0,
+            baseSpeed: 2.5,
+            sprintSpeed: 4.5,
+            isSprinting: false,
+            speed: 2.5
+        };
+        
+        let monster = {
+            x: 700,
+            y: 500,
+            health: 100,
+            speed: 1.8,
+            damage: 15,
+            lastAttack: 0
+        };
+        
+        let guns = [];
+        let bloodSplatters = [];
+        let keys = {};
+        let mouseX = 0;
+        let mouseY = 0;
+        let lastShot = 0;
+        let gameStartTime = 0;
+        let monsterLastHit = 0;
+        let pointerLocked = false;
+        let lastJumpscare = 0;
+        
+        // Super wide, easy-to-navigate maze layout
+        const maze = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,1,1,1,0,0,0,0,1,1,1,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,1,1,1,1,1,1,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,1,1,1,1,1,1,1,1,1,1,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ];
+        
+        const cellSize = 50;
+        
+        // Initialize guns - place them in very visible locations
+        function initGuns() {
+            guns = [
+                {x: 150, y: 150, active: true}, // Top-left open area
+                {x: 650, y: 150, active: true}, // Top-right open area
+                {x: 400, y: 300, active: true}, // Center of maze
+                {x: 150, y: 550, active: true}  // Bottom-left open area
+            ];
+        }
+        
+        // Draw textured floor
+        function drawFloor() {
+            const floorSize = 50;
+            const cols = Math.ceil(canvas.width / floorSize);
+            const rows = Math.ceil(canvas.height / floorSize);
+            
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    // Create a stone texture similar to walls
+                    const distance = Math.sqrt(
+                        Math.pow((x * floorSize) - canvas.width/2, 2) + 
+                        Math.pow((y * floorSize) - canvas.height/2, 2)
+                    );
+                    
+                    // Darker further away
+                    const shade = Math.min(1, distance / 500);
+                    const baseColor = 80 - Math.floor(shade * 30);
+                    const variation = Math.floor(Math.random() * 20) - 10;
+                    const color = Math.max(30, Math.min(100, baseColor + variation));
+                    
+                    ctx.fillStyle = `rgb(${color}, ${color-10}, ${color-20})`;
+                    ctx.fillRect(x * floorSize, y * floorSize, floorSize, floorSize);
+                    
+                    // Add grid lines to make it look like stone tiles
+                    ctx.strokeStyle = `rgba(30, 30, 30, ${0.3 + shade * 0.3})`;
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x * floorSize, y * floorSize, floorSize, floorSize);
+                }
+            }
+        }
+        
+        // Draw textured ceiling
+        function drawCeiling() {
+            const ceilingSize = 50;
+            const cols = Math.ceil(canvas.width / ceilingSize);
+            const rows = Math.ceil(canvas.height / ceilingSize);
+            
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    // Ceiling is darker than floor
+                    const distance = Math.sqrt(
+                        Math.pow((x * ceilingSize) - canvas.width/2, 2) + 
+                        Math.pow((y * ceilingSize) - canvas.height/2, 2)
+                    );
+                    
+                    const shade = Math.min(1, distance / 500);
+                    const baseColor = 50 - Math.floor(shade * 20);
+                    const variation = Math.floor(Math.random() * 15) - 7;
+                    const color = Math.max(20, Math.min(60, baseColor + variation));
+                    
+                    ctx.fillStyle = `rgb(${color}, ${color-5}, ${color-10})`;
+                    ctx.fillRect(x * ceilingSize, y * ceilingSize, ceilingSize, ceilingSize);
+                    
+                    // Subtle grid
+                    ctx.strokeStyle = `rgba(20, 20, 20, ${0.2 + shade * 0.2})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.strokeRect(x * ceilingSize, y * ceilingSize, ceilingSize, ceilingSize);
+                }
+            }
+        }
+        
+        // Draw maze walls
+        function drawMaze() {
+            for (let y = 0; y < maze.length; y++) {
+                for (let x = 0; x < maze[y].length; x++) {
+                    if (maze[y][x] === 1) {
+                        // Stone wall texture
+                        ctx.fillStyle = '#444';
+                        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                        
+                        // Add stone details
+                        ctx.fillStyle = '#333';
+                        ctx.fillRect(x * cellSize, y * cellSize, cellSize, 2);
+                        ctx.fillRect(x * cellSize, y * cellSize, 2, cellSize);
+                        
+                        // Random stone variations
+                        for (let i = 0; i < 3; i++) {
+                            const rx = x * cellSize + Math.random() * cellSize;
+                            const ry = y * cellSize + Math.random() * cellSize;
+                            const size = 3 + Math.random() * 7;
+                            ctx.fillStyle = `rgba(50, 50, 50, ${0.3 + Math.random() * 0.4})`;
+                            ctx.fillRect(rx, ry, size, size);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Draw player view (raycasting with floor, ceiling, and vertical look)
+        function drawPlayerView() {
+            const fov = Math.PI / 3;
+            const numRays = canvas.width / 2;
+            const rayStep = fov / numRays;
+            
+            // Draw ceiling first (top half of screen)
+            ctx.save();
+            ctx.globalAlpha = 0.7;
+            drawCeiling();
+            ctx.restore();
+            
+            // Draw floor (bottom half of screen)
+            drawFloor();
+            
+            // Draw walls
+            for (let i = 0; i < numRays; i++) {
+                const rayAngle = player.angle - fov/2 + i * rayStep;
+                const rayDirX = Math.cos(rayAngle);
+                const rayDirY = Math.sin(rayAngle);
+                
+                let distance = 0;
+                let hitWall = false;
+                let currentX = player.x;
+                let currentY = player.y;
+                
+                // Ray marching
+                while (!hitWall && distance < 300) {
+                    currentX += rayDirX * 2;
+                    currentY += rayDirY * 2;
+                    distance += 2;
+                    
+                    const mapX = Math.floor(currentX / cellSize);
+                    const mapY = Math.floor(currentY / cellSize);
+                    
+                    if (mapX < 0 || mapX >= maze[0].length || 
+                        mapY < 0 || mapY >= maze.length || 
+                        maze[mapY][mapX] === 1) {
+                        hitWall = true;
+                    }
+                }
+                
+                // Calculate wall height with pitch adjustment
+                const wallHeight = (canvas.height / distance) * 200;
+                const wallTop = (canvas.height - wallHeight) / 2 + player.pitch * 100;
+                
+                // Wall shading based on distance
+                const shade = Math.min(1, distance / 300);
+                const baseColor = 180 - Math.floor(shade * 100);
+                ctx.fillStyle = `rgb(${baseColor}, ${baseColor-20}, ${baseColor-30})`;
+                ctx.fillRect(i * 2, wallTop, 2, wallHeight);
+                
+                // Add wall texture details
+                ctx.fillStyle = `rgba(50, 50, 50, ${0.3 + shade * 0.3})`;
+                ctx.fillRect(i * 2, wallTop, 2, 2);
+                ctx.fillRect(i * 2, wallTop + wallHeight - 2, 2, 2);
+            }
+        }
+        
+        // Draw guns - now much more visible
+        function drawGuns() {
+            for (let i = 0; i < guns.length; i++) {
+                const gun = guns[i];
+                if (gun.active) {
+                    // Simple perspective calculation
+                    const dx = gun.x - player.x;
+                    const dy = gun.y - player.y;
+                    const distance = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (distance < 250) {
+                        const angleToGun = Math.atan2(dy, dx);
+                        let angleDiff = angleToGun - player.angle;
+                        
+                        // Normalize angle difference
+                        while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                        while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                        
+                        if (Math.abs(angleDiff) < Math.PI/2) { // Wider viewing angle
+                            // Project to screen with pitch adjustment
+                            const screenX = (angleDiff / (Math.PI/2)) * (canvas.width/2) + canvas.width/2;
+                            const size = 400 / distance; // Larger size
+                            const screenY = canvas.height/2 + player.pitch * 100;
+                            
+                            // Draw glowing weapon
+                            ctx.fillStyle = '#ff3333';
+                            ctx.beginPath();
+                            ctx.arc(screenX, screenY, size, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Glow effect
+                            ctx.globalAlpha = 0.5;
+                            ctx.fillStyle = '#ff6666';
+                            ctx.beginPath();
+                            ctx.arc(screenX, screenY, size * 1.5, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.globalAlpha = 1.0;
+                            
+                            // Weapon details
+                            ctx.fillStyle = '#ffffff';
+                            ctx.font = `${size/2}px Arial`;
+                            ctx.textAlign = 'center';
+                            ctx.fillText('GUN', screenX, screenY + size/3);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Draw monster
+        function drawMonster() {
+            const dx = monster.x - player.x;
+            const dy = monster.y - player.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            if (distance < 300) {
+                const angleToMonster = Math.atan2(dy, dx);
+                let angleDiff = angleToMonster - player.angle;
+                
+                // Normalize angle difference
+                while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                
+                if (Math.abs(angleDiff) < Math.PI/2) { // Wider viewing angle
+                    // Project to screen with pitch adjustment
+                    const screenX = (angleDiff / (Math.PI/2)) * (canvas.width/2) + canvas.width/2;
+                    const size = 500 / distance; // Larger size
+                    const screenY = canvas.height/2 + player.pitch * 100;
+                    
+                    // Draw monster (more detailed)
+                    ctx.fillStyle = '#ff0000';
+                    ctx.beginPath();
+                    ctx.arc(screenX - size/2.5, screenY - size/4, size/3, 0, Math.PI * 2);
+                    ctx.arc(screenX + size/2.5, screenY - size/4, size/3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Draw mouth
+                    ctx.strokeStyle = '#ff0000';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.arc(screenX, screenY + size/3, size/2, 0, Math.PI);
+                    ctx.stroke();
+                    
+                    // Glow effect when close
+                    if (distance < 100) {
+                        ctx.globalAlpha = 0.3;
+                        ctx.fillStyle = '#ff6666';
+                        ctx.beginPath();
+                        ctx.arc(screenX, screenY, size * 1.5, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.globalAlpha = 1.0;
+                    }
+                }
+            }
+        }
+        
+        // Draw blood splatters
+        function drawBloodSplatters() {
+            for (let i = 0; i < bloodSplatters.length; i++) {
+                const splatter = bloodSplatters[i];
+                ctx.globalAlpha = splatter.opacity;
+                ctx.fillStyle = '#800000';
+                ctx.beginPath();
+                ctx.arc(splatter.x, splatter.y, splatter.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1.0;
+        }
+        
+        // Show jumpscare
+        function showJumpscare() {
+            if (Date.now() - lastJumpscare > 2000) { // Prevent spam
+                lastJumpscare = Date.now();
+                jumpscare.style.display = 'flex';
+                
+                setTimeout(() => {
+                    jumpscare.style.display = 'none';
+                }, 1500);
+            }
+        }
+        
+        // FIXED: Guaranteed free movement at all times
+        function updatePlayer() {
+            // Handle sprinting
+            player.isSprinting = keys['ShiftLeft'] || keys['ShiftRight'];
+            player.speed = player.isSprinting ? player.sprintSpeed : player.baseSpeed;
+            
+            // Show/hide sprint indicator
+            sprintIndicator.style.opacity = player.isSprinting ? '1' : '0';
+            
+            // Store original position
+            const originalX = player.x;
+            const originalY = player.y;
+            
+            // Calculate desired movement
+            let moveX = 0;
+            let moveY = 0;
+            
+            if (keys['KeyW'] || keys['ArrowUp']) {
+                moveX += Math.cos(player.angle) * player.speed;
+                moveY += Math.sin(player.angle) * player.speed;
+            }
+            if (keys['KeyS'] || keys['ArrowDown']) {
+                moveX -= Math.cos(player.angle) * player.speed;
+                moveY -= Math.sin(player.angle) * player.speed;
+            }
+            if (keys['KeyA'] || keys['ArrowLeft']) {
+                moveX += Math.cos(player.angle - Math.PI/2) * player.speed;
+                moveY += Math.sin(player.angle - Math.PI/2) * player.speed;
+            }
+            if (keys['KeyD'] || keys['ArrowRight']) {
+                moveX += Math.cos(player.angle + Math.PI/2) * player.speed;
+                moveY += Math.sin(player.angle + Math.PI/2) * player.speed;
+            }
+            
+            // Try full movement first
+            let newX = originalX + moveX;
+            let newY = originalY + moveY;
+            
+            // Check if new position is valid
+            let newMapX = Math.floor(newX / cellSize);
+            let newMapY = Math.floor(newY / cellSize);
+            
+            // If full movement is blocked, try X and Y separately
+            if (newMapX < 0 || newMapX >= maze[0].length || 
+                newMapY < 0 || newMapY >= maze.length || 
+                maze[newMapY][newMapX] === 1) {
+                
+                // Try X movement only
+                newX = originalX + moveX;
+                newMapX = Math.floor(newX / cellSize);
+                newMapY = Math.floor(originalY / cellSize);
+                
+                if (newMapX >= 0 && newMapX < maze[0].length && 
+                    newMapY >= 0 && newMapY < maze.length && 
+                    maze[newMapY][newMapX] === 0) {
+                    player.x = newX;
+                }
+                
+                // Try Y movement only
+                newY = originalY + moveY;
+                newMapX = Math.floor(originalX / cellSize);
+                newMapY = Math.floor(newY / cellSize);
+                
+                if (newMapX >= 0 && newMapX < maze[0].length && 
+                    newMapY >= 0 && newMapY < maze.length && 
+                    maze[newMapY][newMapX] === 0) {
+                    player.y = newY;
+                }
+            } else {
+                // Full movement is valid
+                player.x = newX;
+                player.y = newY;
+            }
+            
+            // Check for gun pickup
+            for (let i = 0; i < guns.length; i++) {
+                const gun = guns[i];
+                if (gun.active) {
+                    const dx = gun.x - player.x;
+                    const dy = gun.y - player.y;
+                    const distance = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (distance < 40) { // Larger pickup radius
+                        guns[i].active = false;
+                        player.ammo += 10;
+                        updateUI();
+                    }
+                }
+            }
+            
+            // Shooting
+            if (keys['MouseLeft'] && player.ammo > 0 && Date.now() - lastShot > 300) {
+                lastShot = Date.now();
+                player.ammo--;
+                updateUI();
+                
+                // Check if monster is in crosshair
+                const dx = monster.x - player.x;
+                const dy = monster.y - player.y;
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                const angleToMonster = Math.atan2(dy, dx);
+                let angleDiff = Math.abs(angleToMonster - player.angle);
+                
+                // Normalize angle difference
+                if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
+                
+                // Also check vertical alignment
+                const verticalDiff = Math.abs(player.pitch);
+                
+                if (distance < 300 && angleDiff < 0.3 && verticalDiff < 0.6) {
+                    monster.health -= 25;
+                    monsterHealthFill.style.width = `${monster.health}%`;
+                    
+                    // Blood splatter effect
+                    const splatterCount = 5 + Math.floor(Math.random() * 5);
+                    for (let i = 0; i < splatterCount; i++) {
+                        bloodSplatters.push({
+                            x: canvas.width/2 + (Math.random() - 0.5) * 100,
+                            y: canvas.height/2 + (Math.random() - 0.5) * 100,
+                            size: 5 + Math.random() * 10,
+                            opacity: 0.7
+                        });
+                    }
+                    
+                    // Remove old splatters
+                    if (bloodSplatters.length > 20) {
+                        bloodSplatters.shift();
+                    }
+                    
+                    if (monster.health <= 0) {
+                        endGame(true);
+                    }
+                }
+            }
+        }
+        
+        // Update monster AI
+        function updateMonster() {
+            const dx = player.x - monster.x;
+            const dy = player.y - monster.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            if (distance > 25) { // Increased attack distance
+                // Move towards player
+                monster.x += (dx / distance) * monster.speed;
+                monster.y += (dy / distance) * monster.speed;
+                
+                // Collision with walls
+                const mapX = Math.floor(monster.x / cellSize);
+                const mapY = Math.floor(monster.y / cellSize);
+                
+                if (mapX < 0 || mapX >= maze[0].length || 
+                    mapY < 0 || mapY >= maze.length || 
+                    maze[mapY][mapX] === 1) {
+                    // Revert movement if collision
+                    monster.x -= (dx / distance) * monster.speed;
+                    monster.y -= (dy / distance) * monster.speed;
+                }
+            } else {
+                // Attack player if close enough
+                if (Date.now() - monster.lastAttack > 1500) {
+                    monster.lastAttack = Date.now();
+                    player.health -= monster.damage;
+                    healthFill.style.width = `${player.health}%`;
+                    
+                    // Show jumpscare
+                    showJumpscare();
+                    
+                    // Blood splatter on player - MORE dramatic effect
+                    const splatterCount = 25 + Math.floor(Math.random() * 15); // Increased from 15-25 to 25-40
+                    for (let i = 0; i < splatterCount; i++) {
+                        bloodSplatters.push({
+                            x: Math.random() * canvas.width,
+                            y: Math.random() * canvas.height,
+                            size: 4 + Math.random() * 10, // Slightly larger
+                            opacity: 0.85 // Higher opacity
+                        });
+                    }
+                    
+                    if (player.health <= 0) {
+                        endGame(false);
+                    }
+                }
+            }
+        }
+        
+        // Update UI elements
+        function updateUI() {
+            healthFill.style.width = `${player.health}%`;
+            monsterHealthFill.style.width = `${monster.health}%`;
+            ammoDisplay.textContent = `AMMO: ${player.ammo}`;
+        }
+        
+        // End the game
+        function endGame(playerWon) {
+            gameState = 'ended';
+            endScreen.style.display = 'flex';
+            
+            const gameTime = Math.floor((Date.now() - gameStartTime) / 1000);
+            
+            if (playerWon) {
+                endMessage.textContent = "YOU SURVIVED!";
+                endMessage.id = "winText";
+                finalStats.textContent = `You defeated the monster in ${gameTime} seconds with ${player.ammo} ammo remaining`;
+            } else {
+                endMessage.textContent = "YOU DIED!";
+                endMessage.id = "loseText";
+                finalStats.textContent = `The monster caught you after ${gameTime} seconds`;
+            }
+            
+            // Unlock pointer
+            if (document.pointerLockElement === canvas) {
+                document.exitPointerLock();
+            }
+        }
+        
+        // Reset game state
+        function resetGame() {
+            player = {
+                x: 50,
+                y: 50,
+                angle: 0,
+                pitch: 0,
+                health: 100,
+                ammo: 0,
+                baseSpeed: 2.5,
+                sprintSpeed: 4.5,
+                isSprinting: false,
+                speed: 2.5
+            };
+            
+            monster = {
+                x: 700,
+                y: 500,
+                health: 100,
+                speed: 1.8,
+                damage: 15,
+                lastAttack: 0
+            };
+            
+            initGuns();
+            bloodSplatters = [];
+            gameState = 'playing';
+            gameStartTime = Date.now();
+            updateUI();
+            
+            startScreen.style.display = 'none';
+            endScreen.style.display = 'none';
+            pointerLockTip.style.opacity = '0';
+            jumpscare.style.display = 'none';
+        }
+        
+        // Request pointer lock
+        function requestPointerLock() {
+            canvas.requestPointerLock = canvas.requestPointerLock ||
+                                        canvas.mozRequestPointerLock ||
+                                        canvas.webkitRequestPointerLock;
+            
+            if (canvas.requestPointerLock) {
+                canvas.requestPointerLock();
+            }
+        }
+        
+        // Game loop
+        function gameLoop() {
+            if (gameState !== 'playing') return;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Update game state
+            updatePlayer();
+            updateMonster();
+            
+            // Draw everything
+            drawPlayerView();
+            drawGuns();
+            drawMonster();
+            drawBloodSplatters();
+            
+            // Fade out blood splatters
+            for (let i = bloodSplatters.length - 1; i >= 0; i--) {
+                bloodSplatters[i].opacity -= 0.01;
+                if (bloodSplatters[i].opacity <= 0) {
+                    bloodSplatters.splice(i, 1);
+                }
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Event listeners
+        window.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+        
+        // Mouse movement for camera rotation (only when locked)
+        document.addEventListener('mousemove', (e) => {
+            if (gameState === 'playing' && document.pointerLockElement === canvas) {
+                // Horizontal sensitivity
+                const horizontalSensitivity = 0.002;
+                player.angle += e.movementX * horizontalSensitivity;
+                
+                // Vertical sensitivity (with limits)
+                const verticalSensitivity = 0.002;
+                player.pitch -= e.movementY * verticalSensitivity;
+                
+                // Limit vertical look to prevent flipping
+                player.pitch = Math.max(-1.0, Math.min(1.0, player.pitch));
+            }
+        });
+        
+        // Handle pointer lock changes
+        document.addEventListener('pointerlockchange', () => {
+            pointerLocked = (document.pointerLockElement === canvas);
+            if (pointerLocked) {
+                pointerLockTip.style.opacity = '0';
+            }
+        });
+        
+        document.addEventListener('mozpointerlockchange', () => {
+            pointerLocked = (document.mozPointerLockElement === canvas);
+        });
+        
+        document.addEventListener('webkitpointerlockchange', () => {
+            pointerLocked = (document.webkitPointerLockElement === canvas);
+        });
+        
+        // Handle failed pointer lock
+        document.addEventListener('pointerlockerror', () => {
+            pointerLockTip.style.opacity = '1';
+        });
+        
+        canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 0) {
+                keys['MouseLeft'] = true;
+            }
+        });
+        
+        canvas.addEventListener('mouseup', (e) => {
+            if (e.button === 0) {
+                keys['MouseLeft'] = false;
+            }
+        });
+        
+        // Start button locks pointer
+        startButton.addEventListener('click', () => {
+            resetGame();
+            requestPointerLock();
+            gameLoop();
+        });
+        
+        // Allow clicking canvas to lock pointer during gameplay
+        canvas.addEventListener('click', () => {
+            if (gameState === 'playing' && !pointerLocked) {
+                requestPointerLock();
+            }
+        });
+        
+        restartButton.addEventListener('click', () => {
+            resetGame();
+            requestPointerLock();
+            gameLoop();
+        });
+        
+        // Initialize
+        initGuns();
+        updateUI();
+    </script>
+</body>
+</html>
